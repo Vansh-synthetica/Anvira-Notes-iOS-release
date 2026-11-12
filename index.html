@@ -2,7 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover here, not only from platform/install.ts: Android's WebView reads it when the page first shows
+         to decide whether the app draws under the status and navigation bars (desktop browsers ignore it) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Anvira Notes</title>
     <meta name="theme-color" content="#1c1c1c" />
     <link rel="icon" type="image/png" href="./favicon.png" />
@@ -10,11 +12,68 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/Anvira-Notes-iOS-release/assets/index-YVYb2jmy.js"></script>
-    <link rel="stylesheet" crossorigin href="/Anvira-Notes-iOS-release/assets/index-D3W1dn6Z.css">
+    <!-- not render-blocking: offline (a phone on a plane) the page must not wait for the font server -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <script type="module" crossorigin src="/Anvira-Notes-iOS-release/assets/index-BJ_YHvBT.js"></script>
+    <link rel="stylesheet" crossorigin href="/Anvira-Notes-iOS-release/assets/index-BOLVadYZ.css">
   </head>
   <body>
+    <!-- The phone / tablet app's opening, after the system's plain graphite splash: "Anvira Notes" fades in at the
+         centre, LOCALHOUSELLM comes in beneath it in thin, wide-spaced capitals, then both fade away once the app has
+         drawn (window.__anviraBootDone, called by the touch shell). Only in the native app; the desktop never shows it. -->
+    <style>
+      #boot { position: fixed; inset: 0; z-index: 2147483000; display: none; align-items: center; justify-content: center; background: #1c1c1c; font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+      html.boot #boot { display: flex; }
+      #boot .stage { display: flex; flex-direction: column; align-items: center; }
+      #boot .name { color: #f5f5f7; font-size: 30px; font-weight: 600; letter-spacing: -0.015em; animation: boot-in 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 150ms both; }
+      #boot .sub { margin-top: 14px; padding-left: 0.42em; color: #8e8e94; font-size: 11.5px; font-weight: 300; letter-spacing: 0.42em; animation: boot-sub 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) 750ms both; }
+      #boot.done { animation: boot-out 520ms cubic-bezier(0.4, 0, 0.2, 1) both; pointer-events: none; }
+      #boot.done .stage { animation: boot-away 520ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+      @keyframes boot-in { from { opacity: 0; transform: translateY(6px); filter: blur(4px) } to { opacity: 1; transform: none; filter: none } }
+      @keyframes boot-sub { from { opacity: 0; letter-spacing: 0.7em } to { opacity: 1; letter-spacing: 0.42em } }
+      @keyframes boot-out { to { opacity: 0 } }
+      @keyframes boot-away { to { opacity: 0; transform: translateY(-4px) } }
+      @media (prefers-reduced-motion: reduce) { #boot *, #boot { animation-duration: 1ms !important; animation-delay: 0ms !important; } }
+    </style>
+    <div id="boot" aria-hidden="true">
+      <div class="stage">
+        <div class="name">Anvira Notes</div>
+        <div class="sub">LOCALHOUSELLM</div>
+      </div>
+    </div>
+    <script>
+      ;(function () {
+        var w = window
+        // Capacitor 8's native shells inject window.Capacitor (neither androidBridge nor webkit.messageHandlers is
+        // there any more), so the touch app is recognised by any of the three markers
+        var C = w.Capacitor
+        var native = !!(
+          w.androidBridge ||
+          (w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.bridge) ||
+          (C && (typeof C.isNativePlatform === 'function' ? C.isNativePlatform() : C.platform === 'android' || C.platform === 'ios'))
+        )
+        if (!native && !/[?&]platform=(android|ios)/.test(location.search)) return
+        document.documentElement.classList.add('boot')
+        var started = Date.now()
+        var gone = false
+        w.__anviraBootDone = function () {
+          if (gone) return
+          gone = true
+          // long enough to read both lines, then out of the way
+          setTimeout(function () {
+            var el = document.getElementById('boot')
+            if (!el) return
+            el.classList.add('done')
+            setTimeout(function () {
+              document.documentElement.classList.remove('boot')
+              el.remove()
+            }, 540)
+          }, Math.max(0, 2100 - (Date.now() - started)))
+        }
+        // never stuck: if the app has not drawn in 10 s, it shows anyway (whatever it has to say)
+        setTimeout(w.__anviraBootDone, 10000)
+      })()
+    </script>
     <div id="root"></div>
   </body>
 </html>
