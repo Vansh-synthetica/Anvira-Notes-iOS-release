@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https:; img-src 'self' data: blob: file: https: http:; media-src 'self' data: blob: file: https:; connect-src 'self' data: blob: https: wss: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; frame-src https:; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <!-- viewport-fit=cover here, not only from platform/install.ts: Android's WebView reads it when the page first shows
          to decide whether the app draws under the status and navigation bars (desktop browsers ignore it) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -12,10 +13,10 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- not render-blocking: offline (a phone on a plane) the page must not wait for the font server -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <script type="module" crossorigin src="/Anvira-Notes-iOS-release/assets/index-BJ_YHvBT.js"></script>
-    <link rel="stylesheet" crossorigin href="/Anvira-Notes-iOS-release/assets/index-BOLVadYZ.css">
+    <!-- not render-blocking: offline (a phone on a plane) the page must not wait for the font server (switched on by boot.js) -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" media="print" id="font-dm-sans" />
+    <script type="module" crossorigin src="/Anvira-Notes-iOS-release/assets/index-D2mUOSBP.js"></script>
+    <link rel="stylesheet" crossorigin href="/Anvira-Notes-iOS-release/assets/index-B4ZrXQlS.css">
   </head>
   <body>
     <!-- The phone / tablet app's opening, after the system's plain graphite splash: "Anvira Notes" fades in at the
@@ -41,39 +42,8 @@
         <div class="sub">LOCALHOUSELLM</div>
       </div>
     </div>
-    <script>
-      ;(function () {
-        var w = window
-        // Capacitor 8's native shells inject window.Capacitor (neither androidBridge nor webkit.messageHandlers is
-        // there any more), so the touch app is recognised by any of the three markers
-        var C = w.Capacitor
-        var native = !!(
-          w.androidBridge ||
-          (w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.bridge) ||
-          (C && (typeof C.isNativePlatform === 'function' ? C.isNativePlatform() : C.platform === 'android' || C.platform === 'ios'))
-        )
-        if (!native && !/[?&]platform=(android|ios)/.test(location.search)) return
-        document.documentElement.classList.add('boot')
-        var started = Date.now()
-        var gone = false
-        w.__anviraBootDone = function () {
-          if (gone) return
-          gone = true
-          // long enough to read both lines, then out of the way
-          setTimeout(function () {
-            var el = document.getElementById('boot')
-            if (!el) return
-            el.classList.add('done')
-            setTimeout(function () {
-              document.documentElement.classList.remove('boot')
-              el.remove()
-            }, 540)
-          }, Math.max(0, 2100 - (Date.now() - started)))
-        }
-        // never stuck: if the app has not drawn in 10 s, it shows anyway (whatever it has to say)
-        setTimeout(w.__anviraBootDone, 10000)
-      })()
-    </script>
+    <!-- the opening and the font switch: a file, not inline (the Content-Security-Policy refuses inline scripts) -->
+    <script src="./boot.js"></script>
     <div id="root"></div>
   </body>
 </html>

@@ -27,7 +27,7 @@ self.addEventListener('fetch', (event) => {
         const fresh = await fetch(req)
         // hashed asset files and the app page are saved as they come; everything else stays online-only
         const tail = url.pathname.slice(BASE.length)
-        const own = req.mode === 'navigate' || tail.startsWith('assets/') || ['favicon.png', 'apple-touch-icon.png', 'manifest.webmanifest'].includes(tail)
+        const own = req.mode === 'navigate' || tail.startsWith('assets/') || ['favicon.png', 'apple-touch-icon.png', 'manifest.webmanifest', 'boot.js'].includes(tail)
         if (fresh && fresh.ok && own) (await caches.open(SHELL)).put(req, fresh.clone())
         return fresh
       } catch {
